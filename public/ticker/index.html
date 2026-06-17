@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>World Cup 2026 Ticker</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #0a1628;
+      font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif;
+    }
+
+    #ticker-bar {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      height: 100vh;
+      background: #0a1628;
+      color: #ffffff;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* ── Badge (left, fixed width) ───────────────────────────────────── */
+    .badge {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0 18px;
+      height: 100%;
+      font-size: clamp(10px, 2.2vh, 16px);
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      border-right: 1px solid rgba(255,255,255,0.15);
+    }
+
+    .badge-live {
+      background: #c0392b;
+      color: #fff;
+    }
+
+    .badge-recent {
+      background: #2c3e5a;
+      color: #a0b4cc;
+    }
+
+    .badge-upcoming {
+      background: #162238;
+      color: #e8c840;
+    }
+
+    /* Pulsing dot for LIVE */
+    .live-dot {
+      display: inline-block;
+      width: clamp(6px, 1.4vh, 10px);
+      height: clamp(6px, 1.4vh, 10px);
+      border-radius: 50%;
+      background: #fff;
+      animation: pulse 1.2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.4; transform: scale(0.7); }
+    }
+
+    /* Trophy icon */
+    .trophy { font-size: clamp(12px, 2.4vh, 18px); }
+
+    /* ── Scrolling content area ──────────────────────────────────────── */
+    .scroll-wrap {
+      flex: 1;
+      overflow: hidden;
+      height: 100%;
+      position: relative;
+    }
+
+    .scroll-track {
+      display: flex;
+      align-items: center;
+      height: 100%;
+      white-space: nowrap;
+      /* JS sets animation inline */
+    }
+
+    .match-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: clamp(11px, 2.4vh, 18px);
+      font-weight: 600;
+      padding: 0 10px;
+    }
+
+    .match-item .score {
+      font-weight: 800;
+      font-size: clamp(12px, 2.6vh, 20px);
+    }
+
+    .match-item .minute {
+      font-size: clamp(9px, 1.8vh, 13px);
+      font-weight: 700;
+      color: #ff6b6b;
+      background: rgba(255,107,107,0.15);
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+
+    .match-item .ft-label {
+      font-size: clamp(9px, 1.8vh, 13px);
+      font-weight: 700;
+      color: #a0b4cc;
+    }
+
+    .match-item .group-label {
+      font-size: clamp(9px, 1.6vh, 12px);
+      color: #6a8aaa;
+    }
+
+    .match-item .time-label {
+      font-size: clamp(9px, 1.8vh, 13px);
+      font-weight: 700;
+      color: #e8c840;
+    }
+
+    .divider {
+      display: inline-block;
+      width: 1px;
+      height: clamp(14px, 3vh, 24px);
+      background: rgba(255,255,255,0.2);
+      margin: 0 14px;
+      vertical-align: middle;
+    }
+
+    /* Fallback */
+    .fallback-text {
+      font-size: clamp(12px, 2.6vh, 20px);
+      font-weight: 700;
+      color: #e8c840;
+      padding: 0 20px;
+    }
+
+    /* State transition fade */
+    .scroll-wrap { transition: opacity 0.4s ease; }
+    .scroll-wrap.fading { opacity: 0; }
+  </style>
+</head>
+<body>
+
+<div id="ticker-bar">
+  <div id="badge" class="badge badge-upcoming">
+    <span id="badge-text"><span class="trophy">🏆</span> FIFA WORLD CUP 2026</span>
+  </div>
+  <div class="scroll-wrap" id="scroll-wrap">
+    <div class="scroll-track" id="scroll-track">
+      <span class="fallback-text">🏆 FIFA World Cup 2026</span>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── Config ─────────────────────────────────────────────────────────
+  // When running locally open this file directly, scores API should be on same host.
+  // On Render the page is served from the same Rails app.
+  const API_URL = (location.hostname === '127.0.0.1' || location.hostname === 'localhost')
+    ? 'http://localhost:3000/api/scores'
+    : '/api/scores';
+
+  const FETCH_INTERVAL_MS  = 20_000;   // poll backend every 20s
+  const CYCLE_INTERVAL_MS  = 10_000;   // flip between recent↔upcoming every 10s
+  const SCROLL_SPEED_PX_S  = 80;       // pixels per second for the scroll animation
+
+  // ── State ──────────────────────────────────────────────────────────
+  let currentData  = null;
+  let cycleState   = 'recent';  // 'recent' | 'upcoming' (when cycling)
+  let cycleTimer   = null;
+
+  // Flag emoji lookup — covers all 32 WC2026 nations + common ones
+  const FLAGS = {
+    'Argentina':    '🇦🇷', 'Australia':   '🇦🇺', 'Belgium':     '🇧🇪',
+    'Brazil':       '🇧🇷', 'Cameroon':    '🇨🇲', 'Canada':      '🇨🇦',
+    'Chile':        '🇨🇱', 'Colombia':    '🇨🇴', 'Costa Rica':  '🇨🇷',
+    'Croatia':      '🇭🇷', 'Denmark':     '🇩🇰', 'Ecuador':     '🇪🇨',
+    'Egypt':        '🇪🇬', 'England':     '🏴󠁧󠁢󠁥󠁮󠁧󠁿', 'France':      '🇫🇷',
+    'Germany':      '🇩🇪', 'Ghana':       '🇬🇭', 'Honduras':    '🇭🇳',
+    'Iran':         '🇮🇷', 'Japan':       '🇯🇵', 'Mexico':      '🇲🇽',
+    'Morocco':      '🇲🇦', 'Netherlands': '🇳🇱', 'New Zealand': '🇳🇿',
+    'Nigeria':      '🇳🇬', 'Panama':      '🇵🇦', 'Paraguay':    '🇵🇾',
+    'Peru':         '🇵🇪', 'Poland':      '🇵🇱', 'Portugal':    '🇵🇹',
+    'Qatar':        '🇶🇦', 'Saudi Arabia':'🇸🇦', 'Senegal':     '🇸🇳',
+    'Serbia':       '🇷🇸', 'South Korea': '🇰🇷', 'Spain':       '🇪🇸',
+    'Switzerland':  '🇨🇭', 'Tunisia':     '🇹🇳', 'United States':'🇺🇸',
+    'Uruguay':      '🇺🇾', 'Wales':       '🏴󠁧󠁢󠁷󠁬󠁳󠁿',
+    // shortName variants
+    'USA':          '🇺🇸', 'Korea Republic':'🇰🇷', 'IR Iran': '🇮🇷',
+    'Czechia':      '🇨🇿', 'Czech Republic':'🇨🇿',
+  };
+
+  function flag(name) {
+    return FLAGS[name] || '🏳️';
+  }
+
+  // ── DOM helpers ────────────────────────────────────────────────────
+  const badgeEl     = document.getElementById('badge');
+  const badgeTextEl = document.getElementById('badge-text');
+  const scrollWrap  = document.getElementById('scroll-wrap');
+  const scrollTrack = document.getElementById('scroll-track');
+
+  function setLiveBadge() {
+    badgeEl.className = 'badge badge-live';
+    badgeTextEl.innerHTML = '<span class="live-dot"></span> LIVE';
+  }
+
+  function setRecentBadge() {
+    badgeEl.className = 'badge badge-recent';
+    badgeTextEl.textContent = 'RESULTS';
+  }
+
+  function setUpcomingBadge() {
+    badgeEl.className = 'badge badge-upcoming';
+    badgeTextEl.innerHTML = '<span class="trophy">🏆</span> FIFA WORLD CUP 2026';
+  }
+
+  const EAT = 'Africa/Nairobi';
+
+  function matchTime(utcDate) {
+    return new Date(utcDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZone: EAT });
+  }
+
+  function matchDayLabel(utcDate) {
+    const d = new Date(utcDate);
+    const now = new Date();
+    // Compare calendar dates in EAT — use en-CA for reliable YYYY-MM-DD string output
+    const fmt = { timeZone: EAT, year: 'numeric', month: '2-digit', day: '2-digit' };
+    const matchDay    = d.toLocaleDateString('en-CA', fmt);
+    const todayDay    = now.toLocaleDateString('en-CA', fmt);
+    const tomorrowDay = new Date(now.getTime() + 864e5).toLocaleDateString('en-CA', fmt);
+    if (matchDay === todayDay)    return 'Today';
+    if (matchDay === tomorrowDay) return 'Tomorrow';
+    return d.toLocaleDateString([], { month: 'short', day: 'numeric', timeZone: EAT });
+  }
+
+  function buildLiveItem(m) {
+    const minuteStr = m.status === 'PAUSED' ? 'HT' : (m.minute ? m.minute + "'" : '');
+    return `<span class="match-item">
+      ${flag(m.home)} ${m.home}
+      <span class="score">${m.home_score ?? 0}–${m.away_score ?? 0}</span>
+      ${m.away} ${flag(m.away)}
+      ${minuteStr ? `<span class="minute">${minuteStr}</span>` : ''}
+      ${m.group ? `<span class="group-label">${m.group}</span>` : ''}
+    </span>`;
+  }
+
+  function buildRecentItem(m) {
+    return `<span class="match-item">
+      <span class="ft-label">FT</span>
+      ${flag(m.home)} ${m.home}
+      <span class="score">${m.home_score ?? 0}–${m.away_score ?? 0}</span>
+      ${m.away} ${flag(m.away)}
+      ${m.group ? `<span class="group-label">${m.group}</span>` : ''}
+    </span>`;
+  }
+
+  function buildUpcomingItem(m) {
+    return `<span class="match-item">
+      <span class="time-label">${matchDayLabel(m.utc_date)} ${matchTime(m.utc_date)}</span>
+      ${flag(m.home)} ${m.home} <span style="color:#6a8aaa">vs</span> ${m.away} ${flag(m.away)}
+      ${m.group ? `<span class="group-label">${m.group}</span>` : ''}
+    </span>`;
+  }
+
+  function buildDivider() {
+    return '<span class="divider"></span>';
+  }
+
+  function buildFallback() {
+    return '<span class="fallback-text">🏆 FIFA World Cup 2026</span>';
+  }
+
+  // Build HTML for a given display mode
+  function buildContent(mode, data) {
+    let items;
+    if (mode === 'live') {
+      items = (data.live || []).map(buildLiveItem);
+    } else if (mode === 'recent') {
+      items = (data.recent || []).map(buildRecentItem);
+    } else {
+      items = (data.upcoming || []).map(buildUpcomingItem);
+    }
+
+    if (!items.length) return buildFallback();
+
+    const single = items.join(buildDivider());
+    // Repeat content so scroll feels continuous (duplicate 4× as buffer)
+    return [single, single, single, single].join(buildDivider());
+  }
+
+  // ── Scroll animation ───────────────────────────────────────────────
+  let scrollAnimId = null;
+  let scrollStartTime = null;
+  let scrollStartX = 0;
+  let scrollContentWidth = 0;
+
+  function startScroll() {
+    cancelAnimationFrame(scrollAnimId);
+
+    // Measure the natural width of one copy of the content
+    // We duplicated 4× so we scroll one full cycle then reset
+    const fullWidth = scrollTrack.scrollWidth;
+    scrollContentWidth = fullWidth / 4;
+
+    // Start from a comfortable position to avoid a flash
+    scrollStartX = 0;
+    scrollStartTime = null;
+
+    function step(ts) {
+      if (!scrollStartTime) scrollStartTime = ts;
+      const elapsed = (ts - scrollStartTime) / 1000; // seconds
+      const x = (scrollStartX + elapsed * SCROLL_SPEED_PX_S) % scrollContentWidth;
+      scrollTrack.style.transform = `translateX(-${x}px)`;
+      scrollAnimId = requestAnimationFrame(step);
+    }
+
+    scrollAnimId = requestAnimationFrame(step);
+  }
+
+  // ── Render a specific display mode ────────────────────────────────
+  function render(mode, data) {
+    // Set badge
+    if (mode === 'live')     setLiveBadge();
+    else if (mode === 'recent') setRecentBadge();
+    else                     setUpcomingBadge();
+
+    // Build content
+    scrollTrack.innerHTML = buildContent(mode, data);
+    startScroll();
+  }
+
+  // ── Cycling logic (recent ↔ upcoming) ─────────────────────────────
+  function startCycle(data) {
+    if (cycleTimer) clearInterval(cycleTimer);
+
+    // Immediately show the first pane
+    render(cycleState, data);
+
+    cycleTimer = setInterval(() => {
+      // Fade out
+      scrollWrap.classList.add('fading');
+      setTimeout(() => {
+        cycleState = cycleState === 'recent' ? 'upcoming' : 'recent';
+        render(cycleState, data);
+        scrollWrap.classList.remove('fading');
+      }, 400);
+    }, CYCLE_INTERVAL_MS);
+  }
+
+  function stopCycle() {
+    if (cycleTimer) { clearInterval(cycleTimer); cycleTimer = null; }
+  }
+
+  // ── Display dispatch ───────────────────────────────────────────────
+  function display(data) {
+    currentData = data;
+    const hasLive     = data.live     && data.live.length > 0;
+    const hasRecent   = data.recent   && data.recent.length > 0;
+    const hasUpcoming = data.upcoming && data.upcoming.length > 0;
+
+    if (hasLive) {
+      stopCycle();
+      render('live', data);
+    } else if (hasRecent && hasUpcoming) {
+      // Reset cycle to start with recent whenever we get new data
+      cycleState = 'recent';
+      startCycle(data);
+    } else if (hasRecent) {
+      stopCycle();
+      render('recent', data);
+    } else if (hasUpcoming) {
+      stopCycle();
+      render('upcoming', data);
+    } else {
+      stopCycle();
+      setUpcomingBadge();
+      scrollTrack.innerHTML = buildFallback();
+      cancelAnimationFrame(scrollAnimId);
+    }
+  }
+
+  // ── Fetch loop ─────────────────────────────────────────────────────
+  async function fetchScores() {
+    try {
+      const res = await fetch(API_URL, { cache: 'no-store' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      display(data);
+    } catch (e) {
+      console.warn('[Ticker] fetch failed:', e.message);
+      // Keep showing last known data — don't blank the screen
+    }
+  }
+
+  // ── Boot ───────────────────────────────────────────────────────────
+  fetchScores();
+  setInterval(fetchScores, FETCH_INTERVAL_MS);
+</script>
+</body>
+</html>

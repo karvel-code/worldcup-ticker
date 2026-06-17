@@ -1,0 +1,35 @@
+services:
+  - type: web
+    name: worldcup-ticker
+    env: ruby
+    buildCommand: bundle install
+    startCommand: bundle exec rails server -p $PORT -e production
+    envVars:
+      - key: RAILS_ENV
+        value: production
+      - key: RAILS_SERVE_STATIC_FILES
+        value: "true"
+      - key: RAILS_LOG_TO_STDOUT
+        value: "true"
+      - key: FOOTBALL_DATA_API_TOKEN
+        sync: false   # set manually in Render dashboard
+      - key: RAILS_MASTER_KEY
+        sync: false   # set manually in Render dashboard
+      - key: REDIS_URL
+        sync: false   # optional — leave blank to use file_store
+
+  - type: cron
+    name: worldcup-ticker-poller
+    env: ruby
+    schedule: "*/1 * * * *"   # every minute (Render free tier minimum)
+    buildCommand: bundle install
+    startCommand: bundle exec rake poll:scores
+    envVars:
+      - key: RAILS_ENV
+        value: production
+      - key: FOOTBALL_DATA_API_TOKEN
+        sync: false
+      - key: RAILS_MASTER_KEY
+        sync: false
+      - key: REDIS_URL
+        sync: false
