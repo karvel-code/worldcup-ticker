@@ -395,21 +395,26 @@
   }
 
   // ── Fetch loop ─────────────────────────────────────────────────────
+  let fetchTimer = null;
+
   async function fetchScores() {
+    clearTimeout(fetchTimer);
     try {
       const res = await fetch(API_URL, { cache: 'no-store' });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       display(data);
+      // On success schedule next poll at the normal interval
+      fetchTimer = setTimeout(fetchScores, FETCH_INTERVAL_MS);
     } catch (e) {
       console.warn('[Ticker] fetch failed:', e.message);
-      // Keep showing last known data — don't blank the screen
+      // On failure retry quickly (5s) so cold-start recovery is fast
+      fetchTimer = setTimeout(fetchScores, 5_000);
     }
   }
 
   // ── Boot ───────────────────────────────────────────────────────────
   fetchScores();
-  setInterval(fetchScores, FETCH_INTERVAL_MS);
 </script>
 </body>
 </html>
