@@ -36,3 +36,32 @@ plugin :tmp_restart
 # Specify the PID file. Defaults to tmp/pids/server.pid in development.
 # In other environments, only set the PID file if requested.
 pidfile ENV["PIDFILE"] if ENV["PIDFILE"]
+
+# Start background polling thread in each Puma worker so the in-process
+# memory cache is populated by the same process that serves requests.
+on_worker_boot do
+  Thread.new do
+    loop do
+      begin
+        FootballDataPoller.call
+      rescue => e
+        Rails.logger.error "[BackgroundPoller] #{e.message}"
+      end
+      sleep 20
+    end
+  end
+end
+
+# Single-worker / development fallback (no forking)
+on_refork do
+  Thread.new do
+    loop do
+      begin
+        FootballDataPoller.call
+      rescue => e
+        Rails.logger.error "[BackgroundPoller] #{e.message}"
+      end
+      sleep 20
+    end
+  end
+end
