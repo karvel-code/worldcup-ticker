@@ -222,7 +222,7 @@
     : '/api/scores';
 
   const FETCH_INTERVAL_MS = 20_000;
-  const CYCLE_INTERVAL_MS = 60_000;
+  const CYCLE_INTERVAL_MS = 30_000;
   const SCROLL_SPEED_PX_S = 40;
   const EAT = 'Africa/Nairobi';
 
@@ -427,14 +427,14 @@
     startScroll();
   }
 
-  function startCycle(data) {
+  function startCycle() {
     if (cycleTimer) clearInterval(cycleTimer);
-    render(cycleState, data);
+    render(cycleState, currentData);
     cycleTimer = setInterval(() => {
       scrollWrap.classList.add('fading');
       setTimeout(() => {
         cycleState = cycleState === 'recent' ? 'upcoming' : 'recent';
-        render(cycleState, data);
+        render(cycleState, currentData);  // always use latest data
         scrollWrap.classList.remove('fading');
       }, 400);
     }, CYCLE_INTERVAL_MS);
@@ -445,6 +445,7 @@
   }
 
   function display(data) {
+    const wasLive = currentData?.live?.length > 0;
     currentData = data;
     const hasLive     = data.live?.length     > 0;
     const hasRecent   = data.recent?.length   > 0;
@@ -453,7 +454,12 @@
     if (hasLive) {
       stopCycle(); render('live', data);
     } else if (hasRecent && hasUpcoming) {
-      cycleState = 'recent'; startCycle(data);
+      if (!cycleTimer || wasLive) {
+        // Start fresh only on first load or when transitioning out of live
+        cycleState = 'recent';
+        startCycle();
+      }
+      // Otherwise let the existing cycle continue uninterrupted
     } else if (hasRecent) {
       stopCycle(); render('recent', data);
     } else if (hasUpcoming) {
