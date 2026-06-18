@@ -43,7 +43,7 @@ on_worker_boot do
   Thread.new do
     loop do
       begin
-        FootballDataPoller.call
+        EspnPoller.call
       rescue => e
         Rails.logger.error "[BackgroundPoller] #{e.message}"
       end
@@ -57,7 +57,7 @@ on_refork do
   Thread.new do
     loop do
       begin
-        FootballDataPoller.call
+        EspnPoller.call
       rescue => e
         Rails.logger.error "[BackgroundPoller] #{e.message}"
       end
