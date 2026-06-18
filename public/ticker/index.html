@@ -180,6 +180,62 @@
       text-transform: uppercase;
     }
 
+    /* ── Full-width single live match scoreboard ────────────────────── */
+    .live-full {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      height: 100%;
+      padding: 0 28px;
+      gap: 0;
+    }
+    .live-full-home,
+    .live-full-away {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: clamp(6px, 1.2vh, 12px);
+    }
+    .live-full-home { justify-content: flex-end; }
+    .live-full-away { justify-content: flex-start; }
+    .live-full-flag { font-size: clamp(22px, 4.5vh, 38px); line-height: 1; }
+    .live-full-team {
+      font-size: clamp(22px, 4.5vh, 38px);
+      font-weight: 900;
+      color: #0a1628;
+      letter-spacing: 0.03em;
+    }
+    .live-full-center {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 clamp(16px, 3vh, 32px);
+      gap: clamp(1px, 0.5vh, 4px);
+    }
+    .live-full-minute {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: clamp(11px, 2vh, 16px);
+      font-weight: 800;
+      color: #cc0000;
+      letter-spacing: 0.04em;
+    }
+    .live-full-score {
+      font-size: clamp(28px, 5.5vh, 46px);
+      font-weight: 900;
+      color: #0a1628;
+      letter-spacing: 0.06em;
+      line-height: 1;
+    }
+    .live-full-meta {
+      font-size: clamp(9px, 1.5vh, 12px);
+      font-weight: 600;
+      color: #8090b8;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
     /* Thin gap divider between card sets */
     .card-divider {
       flex-shrink: 0;
@@ -423,6 +479,26 @@
     return '<div class="fallback-card">🏆 FIFA World Cup 2026</div>';
   }
 
+  function buildLiveFullWidth(m) {
+    const minuteStr = m.status === 'PAUSED' ? 'HT' : (m.minute ? m.minute + "'" : 'LIVE');
+    const meta = [m.group, m.venue_city].filter(Boolean).join(' · ');
+    return `<div class="live-full">
+      <div class="live-full-home">
+        <span class="live-full-flag">${flag(m.home)}</span>
+        <span class="live-full-team">${abbrev(m, 'home')}</span>
+      </div>
+      <div class="live-full-center">
+        <div class="live-full-minute"><span class="live-dot"></span>${minuteStr}</div>
+        <div class="live-full-score">${m.home_score ?? 0} – ${m.away_score ?? 0}</div>
+        ${meta ? `<div class="live-full-meta">${meta}</div>` : ''}
+      </div>
+      <div class="live-full-away">
+        <span class="live-full-team">${abbrev(m, 'away')}</span>
+        <span class="live-full-flag">${flag(m.away)}</span>
+      </div>
+    </div>`;
+  }
+
   function buildSponsorCard() {
     return `<div class="sponsor-card">
       <div class="sponsor-by">Sponsored by</div>
@@ -469,6 +545,15 @@
     if      (mode === 'live')   setStateLive();
     else if (mode === 'recent') setStateRecent();
     else                        setStateUpcoming();
+
+    // Single live match: full-width scoreboard, no scroll
+    if (mode === 'live' && (data.live || []).length <= 1) {
+      cancelAnimationFrame(scrollAnimId);
+      scrollTrack.style.transform = 'translateX(0)';
+      const m = (data.live || [])[0];
+      scrollTrack.innerHTML = m ? buildLiveFullWidth(m) : buildFallback();
+      return;
+    }
 
     scrollTrack.innerHTML = buildContent(mode, data);
     startScroll();
