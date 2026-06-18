@@ -189,6 +189,42 @@
       background: rgba(0,0,0,0.12);
     }
 
+    /* ── Sponsor card ───────────────────────────────────────────────── */
+    .sponsor-card {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      flex-shrink: 0;
+      padding: 0 24px;
+      gap: clamp(1px, 0.6vh, 4px);
+      border-left: 4px solid #e8660e;
+      border-right: 1px solid rgba(0,0,0,0.1);
+      white-space: nowrap;
+      background: #fff8f4;
+    }
+    .sponsor-by {
+      font-size: clamp(8px, 1.3vh, 10px);
+      font-weight: 700;
+      color: #a0a0a0;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+    .sponsor-logo {
+      font-size: clamp(17px, 3.4vh, 27px);
+      font-weight: 900;
+      font-style: italic;
+      line-height: 1;
+      letter-spacing: -0.01em;
+    }
+    .sponsor-bet    { color: #162660; }
+    .sponsor-hooray { color: #e8660e; }
+    .sponsor-url {
+      font-size: clamp(10px, 1.7vh, 13px);
+      font-weight: 700;
+      color: #e8660e;
+      letter-spacing: 0.02em;
+    }
+
     /* Fallback */
     .fallback-card {
       display: flex;
@@ -387,6 +423,16 @@
     return '<div class="fallback-card">🏆 FIFA World Cup 2026</div>';
   }
 
+  function buildSponsorCard() {
+    return `<div class="sponsor-card">
+      <div class="sponsor-by">Sponsored by</div>
+      <div class="sponsor-logo">
+        <span class="sponsor-bet">BET</span><span class="sponsor-hooray">Hooray!</span>
+      </div>
+      <div class="sponsor-url">www.bethooray.com</div>
+    </div>`;
+  }
+
   function buildContent(mode, data) {
     let cards;
     if      (mode === 'live')   cards = (data.live     || []).map(buildLiveCard);
@@ -395,7 +441,8 @@
 
     if (!cards.length) return buildFallback();
 
-    const single = cards.join(buildDivider());
+    // Append one sponsor card per scroll set so it appears naturally in the loop
+    const single = cards.join(buildDivider()) + buildDivider() + buildSponsorCard();
     return [single, single, single, single].join(buildDivider());
   }
 
