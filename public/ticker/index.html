@@ -82,6 +82,7 @@
       flex: 1;
       overflow: hidden;
       height: 100%;
+      position: relative;
       transition: opacity 0.4s ease;
     }
     .scroll-wrap.fading { opacity: 0; }
@@ -292,6 +293,57 @@
       letter-spacing: 0.06em;
       white-space: nowrap;
     }
+
+    /* ── BetHooray sponsor overlay ──────────────────────────────────── */
+    #sponsor-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(2px, 0.8vh, 6px);
+      background: #fff8f4;
+      border-left: 4px solid #e8660e;
+      pointer-events: none;
+      transform: translateY(105%);
+    }
+    #sponsor-overlay.sponsor-in {
+      animation: sponsorSlideIn 0.45s cubic-bezier(0.22,1,0.36,1) forwards;
+    }
+    #sponsor-overlay.sponsor-out {
+      animation: sponsorSlideOut 0.4s ease-in forwards;
+    }
+    @keyframes sponsorSlideIn {
+      from { transform: translateY(105%); }
+      to   { transform: translateY(0);    }
+    }
+    @keyframes sponsorSlideOut {
+      from { transform: translateY(0);    }
+      to   { transform: translateY(105%); }
+    }
+    .overlay-by {
+      font-size: clamp(9px, 1.6vh, 13px);
+      font-weight: 700;
+      color: #a0a0a0;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+    .overlay-brand {
+      font-size: clamp(24px, 5vh, 42px);
+      font-weight: 900;
+      font-style: italic;
+      line-height: 1;
+    }
+    .overlay-bet    { color: #162660; }
+    .overlay-hooray { color: #e8660e; }
+    .overlay-url {
+      font-size: clamp(12px, 2.2vh, 18px);
+      font-weight: 700;
+      color: #e8660e;
+      letter-spacing: 0.02em;
+    }
   </style>
 </head>
 <body>
@@ -304,6 +356,13 @@
   <div class="scroll-wrap" id="scroll-wrap">
     <div class="scroll-track" id="scroll-track">
       <div class="fallback-card">🏆 FIFA World Cup 2026</div>
+    </div>
+    <div id="sponsor-overlay">
+      <div class="overlay-by">Sponsored by</div>
+      <div class="overlay-brand">
+        <span class="overlay-bet">BET</span><span class="overlay-hooray">Hooray!</span>
+      </div>
+      <div class="overlay-url">www.bethooray.com</div>
     </div>
   </div>
 </div>
@@ -517,8 +576,7 @@
 
     if (!cards.length) return buildFallback();
 
-    // Append one sponsor card per scroll set so it appears naturally in the loop
-    const single = cards.join(buildDivider()) + buildDivider() + buildSponsorCard();
+    const single = cards.join(buildDivider());
     return [single, single, single, single].join(buildDivider());
   }
 
@@ -622,6 +680,29 @@
   }
 
   fetchScores();
+
+  // ── BetHooray sponsor overlay ─────────────────────────────────────
+  const sponsorOverlay = document.getElementById('sponsor-overlay');
+  const SPONSOR_VISIBLE_MS = 4_000;   // stays on screen for 4 seconds
+  const SPONSOR_EVERY_MS   = 30_000;  // appears every 30 seconds
+
+  function showSponsor() {
+    // Slide in
+    sponsorOverlay.classList.remove('sponsor-out');
+    sponsorOverlay.classList.add('sponsor-in');
+
+    // Slide out after display duration
+    setTimeout(() => {
+      sponsorOverlay.classList.remove('sponsor-in');
+      sponsorOverlay.classList.add('sponsor-out');
+    }, SPONSOR_VISIBLE_MS);
+  }
+
+  // First appearance after one full cycle, then every 30s
+  setTimeout(() => {
+    showSponsor();
+    setInterval(showSponsor, SPONSOR_EVERY_MS);
+  }, SPONSOR_EVERY_MS);
 </script>
 </body>
 </html>
