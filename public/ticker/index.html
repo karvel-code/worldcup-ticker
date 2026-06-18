@@ -303,8 +303,8 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: clamp(2px, 0.8vh, 6px);
-      background: #fff8f4;
+      gap: clamp(1px, 0.4vh, 4px);
+      background: #ffffff;
       border-left: 4px solid #e8660e;
       pointer-events: none;
       transform: translateY(105%);
@@ -330,16 +330,14 @@
       letter-spacing: 0.14em;
       text-transform: uppercase;
     }
-    .overlay-brand {
-      font-size: clamp(24px, 5vh, 42px);
-      font-weight: 900;
-      font-style: italic;
-      line-height: 1;
+    .overlay-logo {
+      height: clamp(40px, 8vh, 68px);
+      max-width: 70%;
+      width: auto;
+      display: block;
     }
-    .overlay-bet    { color: #162660; }
-    .overlay-hooray { color: #e8660e; }
     .overlay-url {
-      font-size: clamp(12px, 2.2vh, 18px);
+      font-size: clamp(10px, 1.8vh, 14px);
       font-weight: 700;
       color: #e8660e;
       letter-spacing: 0.02em;
@@ -359,9 +357,7 @@
     </div>
     <div id="sponsor-overlay">
       <div class="overlay-by">Sponsored by</div>
-      <div class="overlay-brand">
-        <span class="overlay-bet">BET</span><span class="overlay-hooray">Hooray!</span>
-      </div>
+      <img class="overlay-logo" src="bethooray-logo.png" alt="BetHooray">
       <div class="overlay-url">www.bethooray.com</div>
     </div>
   </div>
@@ -662,11 +658,38 @@
     }
   }
 
+  // ── Mock mode (local testing only) — use ?mock=upcoming|recent|both ─
+  const MOCK_MODE = new URLSearchParams(location.search).get('mock');
+  const MOCK_DATA = {
+    recent: [
+      { home: 'Argentina', home_abbrev: 'ARG', away: 'Canada',       away_abbrev: 'CAN', home_score: 2, away_score: 0, status: 'STATUS_FINAL',     minute: null, group: 'Group A', venue_city: 'Dallas, Texas',           utc_date: new Date(Date.now() - 3  * 36e5).toISOString() },
+      { home: 'France',    home_abbrev: 'FRA', away: 'Mexico',       away_abbrev: 'MEX', home_score: 1, away_score: 1, status: 'STATUS_FINAL',     minute: null, group: 'Group D', venue_city: 'New York, New Jersey',    utc_date: new Date(Date.now() - 5  * 36e5).toISOString() },
+      { home: 'Spain',     home_abbrev: 'ESP', away: 'Morocco',      away_abbrev: 'MAR', home_score: 3, away_score: 1, status: 'STATUS_FINAL',     minute: null, group: 'Group E', venue_city: 'Miami, Florida',          utc_date: new Date(Date.now() - 7  * 36e5).toISOString() },
+      { home: 'Germany',   home_abbrev: 'GER', away: 'Japan',        away_abbrev: 'JPN', home_score: 0, away_score: 1, status: 'STATUS_FINAL',     minute: null, group: 'Group B', venue_city: 'Seattle, Washington',     utc_date: new Date(Date.now() - 22 * 36e5).toISOString() },
+    ],
+    upcoming: [
+      { home: 'Brazil',      home_abbrev: 'BRA', away: 'United States', away_abbrev: 'USA', home_score: 0, away_score: 0, status: 'STATUS_SCHEDULED', minute: null, group: 'Group C', venue_city: 'Los Angeles, California', utc_date: new Date(Date.now() + 2  * 36e5).toISOString() },
+      { home: 'Portugal',    home_abbrev: 'POR', away: 'Uruguay',       away_abbrev: 'URU', home_score: 0, away_score: 0, status: 'STATUS_SCHEDULED', minute: null, group: 'Group H', venue_city: 'Kansas City, Missouri',  utc_date: new Date(Date.now() + 4  * 36e5).toISOString() },
+      { home: 'Netherlands', home_abbrev: 'NED', away: 'Senegal',       away_abbrev: 'SEN', home_score: 0, away_score: 0, status: 'STATUS_SCHEDULED', minute: null, group: 'Group A', venue_city: 'Atlanta, Georgia',       utc_date: new Date(Date.now() + 6  * 36e5).toISOString() },
+      { home: 'England',     home_abbrev: 'ENG', away: 'Nigeria',       away_abbrev: 'NGA', home_score: 0, away_score: 0, status: 'STATUS_SCHEDULED', minute: null, group: 'Group G', venue_city: 'Houston, Texas',         utc_date: new Date(Date.now() + 24 * 36e5).toISOString() },
+    ],
+  };
+
   // ── Fetch loop ────────────────────────────────────────────────────
   let fetchTimer = null;
 
   async function fetchScores() {
     clearTimeout(fetchTimer);
+
+    if (MOCK_MODE) {
+      const data = { live: [], recent: [], upcoming: [] };
+      if (MOCK_MODE === 'recent'   || MOCK_MODE === 'both') data.recent   = MOCK_DATA.recent;
+      if (MOCK_MODE === 'upcoming' || MOCK_MODE === 'both') data.upcoming = MOCK_DATA.upcoming;
+      display(data);
+      fetchTimer = setTimeout(fetchScores, FETCH_INTERVAL_MS);
+      return;
+    }
+
     try {
       const res = await fetch(API_URL, { cache: 'no-store' });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -683,7 +706,7 @@
 
   // ── BetHooray sponsor overlay ─────────────────────────────────────
   const sponsorOverlay = document.getElementById('sponsor-overlay');
-  const SPONSOR_VISIBLE_MS = 4_000;   // stays on screen for 4 seconds
+  const SPONSOR_VISIBLE_MS = 10_000;  // stays on screen for 10 seconds
   const SPONSOR_EVERY_MS   = 30_000;  // appears every 30 seconds
 
   function showSponsor() {
@@ -698,11 +721,9 @@
     }, SPONSOR_VISIBLE_MS);
   }
 
-  // First appearance after one full cycle, then every 30s
-  setTimeout(() => {
-    showSponsor();
-    setInterval(showSponsor, SPONSOR_EVERY_MS);
-  }, SPONSOR_EVERY_MS);
+  // Show immediately on load, then repeat every SPONSOR_EVERY_MS
+  showSponsor();
+  setInterval(showSponsor, SPONSOR_EVERY_MS);
 </script>
 </body>
 </html>
