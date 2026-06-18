@@ -456,7 +456,7 @@
     } else if (hasRecent && hasUpcoming) {
       if (!cycleTimer || wasLive) {
         // Start fresh only on first load or when transitioning out of live
-        cycleState = 'recent';
+        cycleState = 'upcoming';
         startCycle();
       }
       // Otherwise let the existing cycle continue uninterrupted
