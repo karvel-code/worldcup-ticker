@@ -11,7 +11,7 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background: #0f1e35;
+      background: #ffffff;
       font-family: 'Helvetica Neue', Arial, sans-serif;
     }
 
@@ -21,14 +21,14 @@
       align-items: stretch;
       width: 100%;
       height: 100vh;
-      background: #0f1e35;
-      color: #ffffff;
+      background: #ffffff;
+      color: #0a1628;
       overflow: hidden;
-      border-top: 6px solid #ffd700;
+      border-top: 5px solid #cc0000;
     }
-    #ticker-bar.state-live    { border-top-color: #ff4040; }
-    #ticker-bar.state-recent  { border-top-color: #60a8d0; }
-    #ticker-bar.state-upcoming{ border-top-color: #ffd700; }
+    #ticker-bar.state-live    { border-top-color: #cc0000; }
+    #ticker-bar.state-recent  { border-top-color: #1a3a6a; }
+    #ticker-bar.state-upcoming{ border-top-color: #cc0000; }
 
     /* ── Left badge ─────────────────────────────────────────────────── */
     #badge {
@@ -39,33 +39,36 @@
       justify-content: center;
       padding: 0 16px;
       gap: 2px;
-      border-right: 2px solid rgba(255,255,255,0.2);
+      border-right: 2px solid rgba(0,0,0,0.12);
       white-space: nowrap;
     }
 
-    .badge-live     { background: #1e0608; }
-    .badge-recent   { background: #0f1e35; }
-    .badge-upcoming { background: #0f1e35; }
+    .badge-live     { background: #cc0000; }
+    .badge-recent   { background: #1a3a6a; }
+    .badge-upcoming { background: #1a3a6a; }
 
-    .badge-icon  { font-size: clamp(18px, 3.5vh, 28px); line-height: 1; }
+    .badge-icon  { font-size: clamp(18px, 3.5vh, 28px); line-height: 1; color: #ffffff; }
     .badge-label {
       font-size: clamp(10px, 1.6vh, 13px);
       font-weight: 800;
       letter-spacing: 0.12em;
       text-transform: uppercase;
+      color: #ffffff;
     }
-    .badge-live     .badge-label { color: #ff6060; }
-    .badge-recent   .badge-label { color: #70c0e8; }
     .badge-upcoming .badge-label { color: #ffd700; }
 
+    /* White dot inside the red live badge */
     .live-dot {
       display: inline-block;
       width: clamp(8px, 1.8vh, 13px);
       height: clamp(8px, 1.8vh, 13px);
       border-radius: 50%;
-      background: #e74c3c;
+      background: #ffffff;
       animation: pulse 1.2s ease-in-out infinite;
     }
+    /* Red dot when used inside a card (white background) */
+    .card-time-live .live-dot { background: #cc0000; }
+
     @keyframes pulse {
       0%, 100% { opacity: 1;   transform: scale(1); }
       50%       { opacity: 0.3; transform: scale(0.6); }
@@ -95,7 +98,7 @@
       flex-shrink: 0;
       padding: 0 20px;
       gap: clamp(1px, 0.7vh, 5px);
-      border-right: 1px solid rgba(255,255,255,0.15);
+      border-right: 1px solid rgba(0,0,0,0.1);
       white-space: nowrap;
     }
 
@@ -108,7 +111,7 @@
     .card-time {
       font-size: clamp(13px, 2.2vh, 18px);
       font-weight: 800;
-      color: #ffd700;
+      color: #1a3a6a;
       letter-spacing: 0.03em;
     }
     .card-time-live {
@@ -117,19 +120,19 @@
       gap: 5px;
       font-size: clamp(13px, 2.2vh, 18px);
       font-weight: 800;
-      color: #ff6060;
+      color: #cc0000;
       letter-spacing: 0.03em;
     }
     .card-ft {
       font-size: clamp(11px, 1.9vh, 15px);
       font-weight: 800;
-      color: #70c0e8;
+      color: #1a3a6a;
       letter-spacing: 0.06em;
     }
     .card-venue {
       font-size: clamp(10px, 1.6vh, 13px);
       font-weight: 500;
-      color: #80b8d8;
+      color: #6878a0;
       text-transform: uppercase;
       letter-spacing: 0.05em;
     }
@@ -150,18 +153,18 @@
       font-size: clamp(17px, 3.4vh, 28px);
       font-weight: 900;
       letter-spacing: 0.04em;
-      color: #ffffff;
+      color: #0a1628;
     }
     .card-vs {
       font-size: clamp(12px, 2vh, 16px);
       font-weight: 800;
-      color: #5898c8;
+      color: #a0aec0;
     }
     .card-score {
       font-size: clamp(18px, 3.6vh, 28px);
       font-weight: 900;
       letter-spacing: 0.08em;
-      color: #ffffff;
+      color: #0a1628;
     }
 
     /* Row 3: group label */
@@ -169,7 +172,7 @@
     .card-group {
       font-size: clamp(9px, 1.5vh, 12px);
       font-weight: 700;
-      color: #5888b8;
+      color: #8090b8;
       letter-spacing: 0.08em;
       text-transform: uppercase;
     }
@@ -180,7 +183,7 @@
       align-self: center;
       width: 1px;
       height: 60%;
-      background: rgba(255,255,255,0.18);
+      background: rgba(0,0,0,0.12);
     }
 
     /* Fallback */
@@ -190,7 +193,7 @@
       padding: 0 30px;
       font-size: clamp(13px, 3vh, 22px);
       font-weight: 700;
-      color: #e8c840;
+      color: #1a3a6a;
       letter-spacing: 0.06em;
       white-space: nowrap;
     }
@@ -198,7 +201,7 @@
 </head>
 <body>
 
-<div id="ticker-bar" class="state-upcoming">
+<div id="ticker-bar" class="state-upcoming" style="background:#ffffff">
   <div id="badge" class="badge-upcoming">
     <span class="badge-icon">🏆</span>
     <span class="badge-label">WC 2026</span>
