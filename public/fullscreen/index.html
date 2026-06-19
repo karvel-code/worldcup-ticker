@@ -373,10 +373,22 @@
     letter-spacing: 0.04em;
   }
 
+  /* ── Portrait sponsor strip (between title and rows) ────────────── */
+  #portrait-sponsor {
+    display: none; /* hidden in landscape */
+  }
+
   /* ── Portrait overrides ─────────────────────────────────────────── */
   @media (orientation: portrait) {
     #state-title {
       font-size: clamp(32px,9vw,80px);
+      padding-bottom: clamp(6px,1.2vw,14px);
+    }
+
+    /* Push rows to the top — eliminates the dead space */
+    #main {
+      justify-content: flex-start;
+      padding-top: clamp(4px,0.6vh,10px);
     }
 
     .rows-wrap {
@@ -392,6 +404,53 @@
     .header-title .ht-top { font-size: clamp(13px,4vw,28px); }
     .header-title .ht-sub { font-size: clamp(9px,2.5vw,14px); }
     .wc-logo               { height: clamp(40px,8vw,70px); }
+
+    /* Show the sponsor strip only in portrait */
+    #portrait-sponsor {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      padding: clamp(10px,2vw,20px) clamp(28px,3.5vw,72px);
+      background: rgba(0,0,0,0.18);
+      border-top: 1px solid rgba(255,255,255,0.1);
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      gap: clamp(12px,3vw,28px);
+      position: relative;
+      z-index: 5;
+    }
+
+    .ps-label {
+      font-size: clamp(10px,2.2vw,15px);
+      font-weight: 700;
+      color: rgba(255,255,255,0.45);
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    /* White pill wrapping the logo — makes it sit cleanly on the blue BG */
+    .ps-pill {
+      display: flex;
+      align-items: center;
+      background: rgba(255,255,255,0.95);
+      border-radius: 50px;
+      padding: clamp(5px,1.2vw,10px) clamp(14px,3vw,26px);
+      box-shadow: 0 2px 16px rgba(0,0,0,0.25);
+    }
+
+    .ps-logo {
+      height: clamp(28px,6.5vw,52px);
+      width: auto;
+    }
+
+    .ps-url {
+      font-size: clamp(13px,3.2vw,24px);
+      font-weight: 900;
+      color: rgba(255,255,255,0.75);
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+    }
   }
 
   /* Landscape: 2-col match grid when 5+ matches */
@@ -424,6 +483,15 @@
   </header>
 
   <div id="state-title">UPCOMING FIXTURES</div>
+
+  <!-- Portrait-only sponsor strip — hidden in landscape via CSS -->
+  <div id="portrait-sponsor">
+    <span class="ps-label">Sponsored by</span>
+    <div class="ps-pill">
+      <img class="ps-logo" src="../ticker/bethooray-logo.png" alt="BetHooray">
+    </div>
+    <span class="ps-url">www.bethooray.com</span>
+  </div>
 
   <main id="main">
     <div class="fallback">🏆 FIFA World Cup 2026</div>
