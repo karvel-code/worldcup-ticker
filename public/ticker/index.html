@@ -6,6 +6,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
+  <link rel="preload" href="bethooray-logo.png" as="image">
   <title>World Cup 2026 Ticker</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -27,6 +28,7 @@
       background: #ffffff;
       color: #0a1628;
       overflow: hidden;
+      position: relative;
       border-top: 5px solid #cc0000;
     }
     #ticker-bar.state-live    { border-top-color: #cc0000; }
@@ -295,17 +297,18 @@
     }
 
     /* ── BetHooray sponsor overlay ──────────────────────────────────── */
+    /* Covers the FULL ticker bar (badge + scroll area) in a single row  */
     #sponsor-overlay {
       position: absolute;
       inset: 0;
-      z-index: 20;
+      z-index: 30;
       display: flex;
-      flex-direction: column;
+      flex-direction: row;
       align-items: center;
       justify-content: center;
-      gap: clamp(1px, 0.4vh, 4px);
+      gap: clamp(10px, 2.5vw, 36px);
       background: #ffffff;
-      border-left: 4px solid #e8660e;
+      border-top: 4px solid #e8660e;
       pointer-events: none;
       transform: translateY(105%);
     }
@@ -324,23 +327,27 @@
       to   { transform: translateY(105%); }
     }
     .overlay-by {
-      font-size: clamp(9px, 1.6vh, 13px);
+      font-size: clamp(11px, 2vh, 16px);
       font-weight: 700;
       color: #a0a0a0;
-      letter-spacing: 0.14em;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
     .overlay-logo {
-      height: clamp(40px, 8vh, 68px);
-      max-width: 70%;
+      height: clamp(34px, 70%, 64px);
       width: auto;
       display: block;
+      flex-shrink: 0;
     }
     .overlay-url {
-      font-size: clamp(10px, 1.8vh, 14px);
-      font-weight: 700;
+      font-size: clamp(13px, 2.4vh, 20px);
+      font-weight: 900;
       color: #e8660e;
       letter-spacing: 0.02em;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
   </style>
 </head>
@@ -355,11 +362,13 @@
     <div class="scroll-track" id="scroll-track">
       <div class="fallback-card">🏆 FIFA World Cup 2026</div>
     </div>
-    <div id="sponsor-overlay">
-      <div class="overlay-by">Sponsored by</div>
-      <img class="overlay-logo" src="bethooray-logo.png" alt="BetHooray">
-      <div class="overlay-url">www.bethooray.com</div>
-    </div>
+  </div>
+
+  <!-- Overlay is on ticker-bar so it covers badge + scroll area -->
+  <div id="sponsor-overlay">
+    <div class="overlay-by">Sponsored by</div>
+    <img class="overlay-logo" src="bethooray-logo.png" alt="BetHooray">
+    <div class="overlay-url">www.bethooray.com</div>
   </div>
 </div>
 
@@ -701,6 +710,9 @@
       fetchTimer = setTimeout(fetchScores, 5_000);
     }
   }
+
+  // Preload BetHooray logo so it's ready before the overlay appears
+  (new Image()).src = 'bethooray-logo.png';
 
   fetchScores();
 
