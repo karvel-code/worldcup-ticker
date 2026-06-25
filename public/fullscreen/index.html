@@ -9,13 +9,11 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   :root {
-    --bg-from:  #0c1f6e;
-    --bg-to:    #0898c8;
     --white:    #ffffff;
     --gold:     #f0c040;
     --red:      #cc0000;
-    --row-odd:  rgba(255,255,255,0.06);
-    --row-even: rgba(255,255,255,0.12);
+    --card-bg:  #0f1c3a;
+    --card-alt: #121f3d;
     --sep:      rgba(255,255,255,0.15);
   }
 
@@ -30,32 +28,9 @@
     width: 100vw; height: 100vh;
     display: flex;
     flex-direction: column;
-    background: linear-gradient(145deg, #0c1f6e 0%, #0d3fa0 38%, #0878bc 65%, #0898c8 100%);
+    background: #ffffff;
     position: relative;
     overflow: hidden;
-  }
-
-  /* Decorative large circles (top-right), like DStv poster */
-  #screen::before,
-  #screen::after {
-    content: '';
-    position: absolute;
-    border-radius: 50%;
-    pointer-events: none;
-  }
-  #screen::before {
-    width: clamp(300px, 45vw, 700px);
-    height: clamp(300px, 45vw, 700px);
-    top: clamp(-200px, -20vw, -120px);
-    right: clamp(-200px, -18vw, -100px);
-    background: radial-gradient(circle, rgba(0,200,255,0.18) 0%, transparent 70%);
-  }
-  #screen::after {
-    width: clamp(180px, 28vw, 440px);
-    height: clamp(180px, 28vw, 440px);
-    top: clamp(-80px, -8vw, -40px);
-    right: clamp(-60px, -5vw, -20px);
-    background: radial-gradient(circle, rgba(0,180,255,0.12) 0%, transparent 70%);
   }
 
   /* ── Header ─────────────────────────────────────────────────────── */
@@ -92,14 +67,14 @@
   .ht-top {
     font-size: clamp(14px,2vw,30px);
     font-weight: 900;
-    color: var(--white);
+    color: #0f1c3a;
     letter-spacing: 0.06em;
   }
 
   .ht-sub {
     font-size: clamp(9px,1.1vw,16px);
     font-weight: 700;
-    color: var(--gold);
+    color: #e8660e;
     letter-spacing: 0.2em;
     text-transform: uppercase;
   }
@@ -115,7 +90,7 @@
   .sponsor-by {
     font-size: clamp(9px,1vw,13px);
     font-weight: 700;
-    color: rgba(255,255,255,0.55);
+    color: #8090b8;
     letter-spacing: 0.18em;
     text-transform: uppercase;
   }
@@ -133,18 +108,17 @@
     font-size: clamp(28px,6.5vw,96px);
     font-weight: 900;
     font-style: italic;
-    color: var(--white);
+    color: #0f1c3a;
     letter-spacing: 0.03em;
     line-height: 1;
     text-transform: uppercase;
     position: relative;
     z-index: 5;
-    text-shadow: 0 4px 20px rgba(0,0,0,0.3);
     flex-shrink: 0;
     transition: opacity 0.3s;
   }
 
-  #state-title.title-live { color: #ff6060; }
+  #state-title.title-live { color: #cc0000; }
 
   /* Thin underline accent */
   #state-title::after {
@@ -153,7 +127,7 @@
     margin-top: clamp(4px,0.6vh,10px);
     height: 4px;
     width: clamp(60px,12vw,180px);
-    background: var(--gold);
+    background: #e8660e;
     border-radius: 2px;
   }
 
@@ -177,23 +151,21 @@
   .rows-wrap {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 0;
+    gap: clamp(6px,1vh,12px);
     width: 100%;
   }
 
-  /* ── Match row ───────────────────────────────────────────────────── */
+  /* ── Match row (dark navy card, matches ticker style) ───────────── */
   .match-row {
     display: flex;
     align-items: center;
     padding: clamp(8px,1.3vh,22px) clamp(12px,1.8vw,32px);
-    border-bottom: 1px solid var(--sep);
+    background: var(--card-bg);
+    border-radius: 10px;
     gap: clamp(8px,1.2vw,20px);
-    transition: background 0.2s;
   }
 
-  .match-row:nth-child(odd)  { background: var(--row-odd);  }
-  .match-row:nth-child(even) { background: var(--row-even); }
-  .match-row:last-child { border-bottom: none; }
+  .match-row:nth-child(even) { background: var(--card-alt); }
 
   /* Status pill */
   .row-status {
@@ -297,7 +269,7 @@
     align-items: center;
     justify-content: space-between;
     padding: clamp(8px,1.2vh,16px) clamp(28px,3.5vw,72px);
-    border-top: 1px solid var(--sep);
+    border-top: 1px solid rgba(15,28,58,0.15);
     flex-shrink: 0;
     position: relative;
     z-index: 5;
@@ -306,7 +278,7 @@
   .footer-hosts {
     font-size: clamp(10px,1.1vw,15px);
     font-weight: 700;
-    color: rgba(255,255,255,0.4);
+    color: rgba(15,28,58,0.45);
     letter-spacing: 0.08em;
   }
 
@@ -321,7 +293,7 @@
   .fallback {
     font-size: clamp(24px,4vw,56px);
     font-weight: 900;
-    color: rgba(255,255,255,0.25);
+    color: rgba(15,28,58,0.25);
     text-align: center;
     padding: 40px;
   }
@@ -385,11 +357,11 @@
       padding-bottom: clamp(6px,1.2vw,14px);
     }
 
-    /* Remove top/bottom padding — rows fill #main edge-to-edge */
+    /* Minimal vertical padding — cards have their own gap */
     #main {
       justify-content: flex-start;
-      padding-top: 0;
-      padding-bottom: 0;
+      padding-top: clamp(4px,0.8vw,10px);
+      padding-bottom: clamp(4px,0.8vw,10px);
     }
 
     /* Switch rows-wrap to flex column so rows stretch to fill all of #main */
@@ -424,9 +396,9 @@
       justify-content: center;
       flex-shrink: 0;
       padding: clamp(10px,2vw,20px) clamp(28px,3.5vw,72px);
-      background: rgba(0,0,0,0.18);
-      border-top: 1px solid rgba(255,255,255,0.1);
-      border-bottom: 1px solid rgba(255,255,255,0.1);
+      background: #0f1c3a;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
       gap: clamp(12px,3vw,28px);
       position: relative;
       z-index: 5;
@@ -435,7 +407,7 @@
     .ps-label {
       font-size: clamp(10px,2.2vw,15px);
       font-weight: 700;
-      color: rgba(255,255,255,0.45);
+      color: rgba(255,255,255,0.55);
       letter-spacing: 0.16em;
       text-transform: uppercase;
       white-space: nowrap;
@@ -469,9 +441,6 @@
     .rows-wrap.two-col {
       grid-template-columns: 1fr 1fr;
       column-gap: clamp(16px,2vw,40px);
-    }
-    .rows-wrap.two-col .match-row {
-      border-bottom: 1px solid var(--sep);
     }
   }
 </style>
